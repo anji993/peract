@@ -11,6 +11,5 @@ setup(
     author='Mohit Shridhar',
     author_email='mshr@cs.washington.edu',
     url='https://peract.github.io/',
-    install_requires=[line for line in open('requirements.txt').readlines() if "@" not in line],
     keywords=['Transformer', 'Behavior-Cloning', 'Langauge', 'Robotics', 'Manipulation'],
 )

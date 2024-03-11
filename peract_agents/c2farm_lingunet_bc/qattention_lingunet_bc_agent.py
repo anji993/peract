@@ -12,12 +12,12 @@ from pytorch3d import transforms as torch3d_tf
 from yarr.agents.agent import Agent, ActResult, ScalarSummary, \
     HistogramSummary, ImageSummary, Summary
 
-from helpers import utils
-from helpers.utils import visualise_voxel, stack_on_channel
-from voxel.voxel_grid import VoxelGrid
-from voxel.augmentation import apply_se3_augmentation
+from peract_helpers import utils
+from peract_helpers.utils import visualise_voxel, stack_on_channel
+from peract_voxel.voxel_grid import VoxelGrid
+from peract_voxel.augmentation import apply_se3_augmentation
 from einops import rearrange
-from helpers.clip.core.clip import build_model, load_clip
+from peract_helpers.clip.core.clip import build_model, load_clip
 
 import transformers
 from torch.nn.parallel import DistributedDataParallel as DDP

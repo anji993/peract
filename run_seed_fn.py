@@ -14,13 +14,13 @@ from yarr.replay_buffer.wrappers.pytorch_replay_buffer import PyTorchReplayBuffe
 from yarr.runners.offline_train_runner import OfflineTrainRunner
 from yarr.utils.stat_accumulator import SimpleAccumulator
 
-from helpers.custom_rlbench_env import CustomRLBenchEnv, CustomMultiTaskRLBenchEnv
+from peract_helpers.custom_rlbench_env import CustomRLBenchEnv, CustomMultiTaskRLBenchEnv
 import torch.distributed as dist
 
-from agents import c2farm_lingunet_bc
-from agents import peract_bc
-from agents import arm
-from agents.baselines import bc_lang, vit_bc_lang
+from peract_agents import c2farm_lingunet_bc
+from peract_agents import peract_bc
+from peract_agents import arm
+from peract_agents.baselines import bc_lang, vit_bc_lang
 
 
 def run_seed(rank,
@@ -105,7 +105,7 @@ def run_seed(rank,
 
     elif cfg.method.name == 'PERACT_BC':
         replay_buffer = peract_bc.launch_utils.create_replay(
-            cfg.replay.batch_size, cfg.replay.timesteps,
+            cfg.replay.batch_size, rank, cfg.replay.timesteps,
             cfg.replay.prioritisation,
             cfg.replay.task_uniform,
             replay_path if cfg.replay.use_disk else None,
@@ -114,7 +114,7 @@ def run_seed(rank,
 
         peract_bc.launch_utils.fill_multi_task_replay(
             cfg, obs_config, rank,
-            replay_buffer, tasks, cfg.rlbench.demos,
+            replay_buffer, tasks, cfg.replay.path, cfg.rlbench.demos,
             cfg.method.demo_augmentation, cfg.method.demo_augmentation_every_n,
             cams, cfg.rlbench.scene_bounds,
             cfg.method.voxel_sizes, cfg.method.bounds_offset,

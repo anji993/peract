@@ -9,10 +9,10 @@ import torch.nn.functional as F
 from yarr.agents.agent import Agent, Summary, ActResult, \
     ScalarSummary, HistogramSummary
 
-from helpers import utils
-from helpers.utils import stack_on_channel
+from peract_helpers import utils
+from peract_helpers.utils import stack_on_channel
 
-from helpers.clip.core.clip import build_model, load_clip
+from peract_helpers.clip.core.clip import build_model, load_clip
 
 NAME = 'BCLangAgent'
 REPLAY_ALPHA = 0.7

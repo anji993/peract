@@ -6,8 +6,8 @@ from yarr.agents.agent import Agent, ActResult, Summary
 
 import numpy as np
 
-from helpers import utils
-from agents.c2farm_lingunet_bc.qattention_lingunet_bc_agent import QAttentionLingUNetBCAgent
+from peract_helpers import utils
+from peract_agents.c2farm_lingunet_bc.qattention_lingunet_bc_agent import QAttentionLingUNetBCAgent
 
 from scipy.spatial.transform import Rotation
 

@@ -12,13 +12,13 @@ from yarr.replay_buffer.prioritized_replay_buffer import \
 from yarr.replay_buffer.replay_buffer import ReplayElement, ReplayBuffer
 from yarr.replay_buffer.uniform_replay_buffer import UniformReplayBuffer
 
-from helpers import demo_loading_utils, utils
-from helpers.custom_rlbench_env import CustomRLBenchEnv
-from helpers.network_utils import SiameseNet, DenseBlock, Conv2DBlock, \
+from peract_helpers import demo_loading_utils, utils
+from peract_helpers.custom_rlbench_env import CustomRLBenchEnv
+from peract_helpers.network_utils import SiameseNet, DenseBlock, Conv2DBlock, \
     Conv2DUpsampleBlock
-from helpers.preprocess_agent import PreprocessAgent
-from agents.arm.next_best_pose_agent import NextBestPoseAgent
-from agents.arm.qattention_agent import QAttentionAgent
+from peract_helpers.preprocess_agent import PreprocessAgent
+from peract_agents.arm.next_best_pose_agent import NextBestPoseAgent
+from peract_agents.arm.qattention_agent import QAttentionAgent
 
 REWARD_SCALE = 100.0
 
@@ -45,7 +45,7 @@ def create_replay(batch_size: int, timesteps: int, prioritisation: bool,
         reward_dtype=np.float32,
         update_horizon=1,
         observation_elements=observation_elements,
-        extra_replay_elements=[ReplayElement('demo', (), np.bool)]
+        extra_replay_elements=[ReplayElement('demo', (), np.bool_)]
     )
     return replay_buffer
 

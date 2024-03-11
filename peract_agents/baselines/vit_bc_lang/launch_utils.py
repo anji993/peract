@@ -17,15 +17,15 @@ from yarr.replay_buffer.replay_buffer import ReplayElement, ReplayBuffer
 from yarr.replay_buffer.uniform_replay_buffer import UniformReplayBuffer
 from yarr.replay_buffer.task_uniform_replay_buffer import TaskUniformReplayBuffer
 
-from helpers import demo_loading_utils, utils
-from agents.baselines.vit_bc_lang.vit_bc_lang_agent import ViTBCLangAgent
-from helpers.custom_rlbench_env import CustomRLBenchEnv
-from helpers.network_utils import ViTLangAndFcsNet, ViT
-from helpers.preprocess_agent import PreprocessAgent
+from peract_helpers import demo_loading_utils, utils
+from peract_agents.baselines.vit_bc_lang.vit_bc_lang_agent import ViTBCLangAgent
+from peract_helpers.custom_rlbench_env import CustomRLBenchEnv
+from peract_helpers.network_utils import ViTLangAndFcsNet, ViT
+from peract_helpers.preprocess_agent import PreprocessAgent
 
 import torch
 from torch.multiprocessing import Process, Value, Manager
-from helpers.clip.core.clip import build_model, load_clip, tokenize
+from peract_helpers.clip.core.clip import build_model, load_clip, tokenize
 
 LOW_DIM_SIZE = 4
 
@@ -64,7 +64,7 @@ def create_replay(batch_size: int, timesteps: int,
     ])
 
     extra_replay_elements = [
-        ReplayElement('demo', (), np.bool),
+        ReplayElement('demo', (), np.bool_),
     ]
 
     replay_buffer = TaskUniformReplayBuffer(

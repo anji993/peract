@@ -12,8 +12,8 @@ from torchvision import transforms
 from yarr.agents.agent import Agent, ActResult, ScalarSummary, \
     HistogramSummary, ImageSummary, Summary
 
-from helpers import utils
-from helpers.utils import stack_on_channel
+from peract_helpers import utils
+from peract_helpers.utils import stack_on_channel
 
 NAME = 'QAttentionAgent'
 REPLAY_BETA = 1.0

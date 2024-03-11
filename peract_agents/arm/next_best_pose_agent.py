@@ -10,9 +10,9 @@ import torch.nn.functional as F
 from yarr.agents.agent import Agent, Summary, ActResult, \
     ScalarSummary, ImageSummary, HistogramSummary
 
-from helpers import utils
-from helpers.utils import stack_on_channel
-from agents.arm.qattention_agent import QAttentionAgent
+from peract_helpers import utils
+from peract_helpers.utils import stack_on_channel
+from peract_agents.arm.qattention_agent import QAttentionAgent
 
 NAME = 'NextBestPoseAgent'
 LOG_STD_MAX = 4

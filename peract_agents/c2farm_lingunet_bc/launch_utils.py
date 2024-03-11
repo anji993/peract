@@ -16,16 +16,16 @@ from yarr.replay_buffer.replay_buffer import ReplayElement, ReplayBuffer
 from yarr.replay_buffer.uniform_replay_buffer import UniformReplayBuffer
 from yarr.replay_buffer.task_uniform_replay_buffer import TaskUniformReplayBuffer
 
-from helpers import demo_loading_utils, utils
-from helpers.preprocess_agent import PreprocessAgent
-from helpers.clip.core.clip import tokenize
-from agents.c2farm_lingunet_bc.networks import QattentionLingU3DNet
-from agents.c2farm_lingunet_bc.qattention_lingunet_bc_agent import QAttentionLingUNetBCAgent
-from agents.c2farm_lingunet_bc.qattention_stack_agent import QAttentionStackAgent
+from peract_helpers import demo_loading_utils, utils
+from peract_helpers.preprocess_agent import PreprocessAgent
+from peract_helpers.clip.core.clip import tokenize
+from peract_agents.c2farm_lingunet_bc.networks import QattentionLingU3DNet
+from peract_agents.c2farm_lingunet_bc.qattention_lingunet_bc_agent import QAttentionLingUNetBCAgent
+from peract_agents.c2farm_lingunet_bc.qattention_stack_agent import QAttentionStackAgent
 
 import torch
 from torch.multiprocessing import Process, Value, Manager
-from helpers.clip.core.clip import build_model, load_clip, tokenize
+from peract_helpers.clip.core.clip import build_model, load_clip, tokenize
 from omegaconf import DictConfig
 
 REWARD_SCALE = 100.0
@@ -92,7 +92,7 @@ def create_replay(batch_size: int, timesteps: int,
         )
 
     extra_replay_elements = [
-        ReplayElement('demo', (), np.bool),
+        ReplayElement('demo', (), np.bool_),
     ]
 
     replay_buffer = TaskUniformReplayBuffer(

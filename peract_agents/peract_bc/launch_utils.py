@@ -2,6 +2,9 @@
 # Source: https://github.com/stepjam/ARM
 # License: https://github.com/stepjam/ARM/LICENSE
 
+import os
+import pickle
+
 import logging
 from typing import List
 
@@ -29,11 +32,13 @@ from torch.multiprocessing import Process, Value, Manager
 from peract_helpers.clip.core.clip import build_model, load_clip, tokenize
 from omegaconf import DictConfig
 
+from rlbench.backend.const import *
+
 REWARD_SCALE = 100.0
 LOW_DIM_SIZE = 4
 
 
-def create_replay(batch_size: int, timesteps: int,
+def create_replay(batch_size: int, rank: int, timesteps: int,
                   prioritisation: bool, task_uniform: bool,
                   save_dir: str, cameras: list,
                   voxel_sizes,
@@ -79,18 +84,19 @@ def create_replay(batch_size: int, timesteps: int,
                       np.float32),
         ReplayElement('lang_token_embs', (max_token_seq_len, lang_emb_dim,),
                       np.float32), # extracted from CLIP's language encoder
-        ReplayElement('task', (),
-                      str),
+        # ReplayElement('task', (),
+        #               str),
         ReplayElement('lang_goal', (1,),
                       object),  # language goal string for debugging and visualization
     ])
 
     extra_replay_elements = [
-        ReplayElement('demo', (), np.bool),
+        ReplayElement('demo', (), np.bool_),
     ]
 
     replay_buffer = TaskUniformReplayBuffer(
-        save_dir=save_dir,
+        rank,
+        disk_saving=True,
         batch_size=batch_size,
         timesteps=timesteps,
         replay_capacity=int(replay_size),
@@ -147,6 +153,7 @@ def _get_action(
 def _add_keypoints_to_replay(
         cfg: DictConfig,
         task: str,
+        task_replay_storage_folder: str,
         replay: ReplayBuffer,
         inital_obs: Observation,
         demo: Demo,
@@ -187,7 +194,7 @@ def _add_keypoints_to_replay(
             'trans_action_indicies': trans_indicies,
             'rot_grip_action_indicies': rot_grip_indicies,
             'gripper_pose': obs_tp1.gripper_pose,
-            'task': task,
+            # 'task': task,
             'lang_goal': np.array([description], dtype=object),
         }
 
@@ -195,7 +202,7 @@ def _add_keypoints_to_replay(
         others.update(obs_dict)
 
         timeout = False
-        replay.add(action, reward, terminal, timeout, **others)
+        replay.add(task, task_replay_storage_folder, action, reward, terminal, timeout, **others)
         obs = obs_tp1
 
     # final step
@@ -206,7 +213,7 @@ def _add_keypoints_to_replay(
 
     obs_dict_tp1.pop('wrist_world_to_cam', None)
     obs_dict_tp1.update(final_obs)
-    replay.add_final(**obs_dict_tp1)
+    replay.add_final(task, task_replay_storage_folder, **obs_dict_tp1)
 
 
 def fill_replay(cfg: DictConfig,
@@ -214,6 +221,7 @@ def fill_replay(cfg: DictConfig,
                 rank: int,
                 replay: ReplayBuffer,
                 task: str,
+                task_replay_storage_folder: str,
                 num_demos: int,
                 demo_augmentation: bool,
                 demo_augmentation_every_n: int,
@@ -245,7 +253,14 @@ def fill_replay(cfg: DictConfig,
             random_selection=False,
             from_episode_number=d_idx)[0]
 
-        descs = demo._observations[0].misc['descriptions']
+        # descs = demo._observations[0].misc['descriptions']
+
+        varation_descs_pkl_file = os.path.join(
+            cfg.rlbench.demo_path, task, VARIATIONS_FOLDER % -1, EPISODES_FOLDER, 'episode%d' % d_idx, 'variation_descriptions.pkl'
+        )
+        with open(varation_descs_pkl_file, "rb") as f:
+            descs = pickle.load(f)
+
 
         # extract keypoints (a.k.a keyframes)
         episode_keypoints = demo_loading_utils.keypoint_discovery(demo, method=keypoint_method)
@@ -267,7 +282,7 @@ def fill_replay(cfg: DictConfig,
             if len(episode_keypoints) == 0:
                 break
             _add_keypoints_to_replay(
-                cfg, task, replay, obs, demo, episode_keypoints, cameras,
+                cfg, task, task_replay_storage_folder, replay, obs, demo, episode_keypoints, cameras,
                 rlbench_scene_bounds, voxel_sizes, bounds_offset,
                 rotation_resolution, crop_augmentation, description=desc,
                 clip_model=clip_model, device=device)
@@ -279,6 +294,7 @@ def fill_multi_task_replay(cfg: DictConfig,
                            rank: int,
                            replay: ReplayBuffer,
                            tasks: List[str],
+                           task_replay_storage_folder: str,
                            num_demos: int,
                            demo_augmentation: bool,
                            demo_augmentation_every_n: int,
@@ -316,6 +332,7 @@ def fill_multi_task_replay(cfg: DictConfig,
                                                   rank,
                                                   replay,
                                                   task,
+                                                  task_replay_storage_folder,
                                                   num_demos,
                                                   demo_augmentation,
                                                   demo_augmentation_every_n,

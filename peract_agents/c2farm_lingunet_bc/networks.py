@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from helpers.network_utils import Conv3DInceptionBlock, DenseBlock, SpatialSoftmax3D, \
+from peract_helpers.network_utils import Conv3DInceptionBlock, DenseBlock, SpatialSoftmax3D, \
     Conv3DInceptionBlockUpsampleBlock, Conv3DBlock
 
 

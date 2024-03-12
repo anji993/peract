@@ -7,6 +7,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.distributed as dist
 from torchvision import transforms
 from pytorch3d import transforms as torch3d_tf
 from yarr.agents.agent import Agent, ActResult, ScalarSummary, \
@@ -18,11 +19,13 @@ from peract_voxel.voxel_grid import VoxelGrid
 from peract_voxel.augmentation import apply_se3_augmentation
 from einops import rearrange
 from peract_helpers.clip.core.clip import build_model, load_clip
+from peract_helpers.clip.core.clip import tokenize
 
 import transformers
 from peract_helpers.optim.lamb import Lamb
 
 from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.nn.parallel.distributed import DistributedDataParallel
 
 NAME = 'QAttentionAgent'
 
@@ -44,7 +47,8 @@ class QFunction(nn.Module):
 
         # distributed training
         if training:
-            self._qnet = DDP(self._qnet, device_ids=[device])
+            if dist.is_initialized():
+                self._qnet = DDP(self._qnet, device_ids=[device])
 
     def _argmax_3d(self, tensor_orig):
         b, c, d, h, w = tensor_orig.shape  # c will be one
@@ -137,7 +141,6 @@ class QAttentionPerActBCAgent(Agent):
                  transform_augmentation_rpy: list = [0.0, 0.0, 180.0],
                  transform_augmentation_rot_resolution: int = 5,
                  optimizer_type: str = 'adam',
-                 num_devices: int = 1,
                  ):
         self._layer = layer
         self._coordinate_bounds = coordinate_bounds
@@ -165,7 +168,6 @@ class QAttentionPerActBCAgent(Agent):
         self._transform_augmentation_rpy = transform_augmentation_rpy
         self._transform_augmentation_rot_resolution = transform_augmentation_rot_resolution
         self._optimizer_type = optimizer_type
-        self._num_devices = num_devices
         self._num_rotation_classes = num_rotation_classes
         self._rotation_resolution = rotation_resolution
 
@@ -265,6 +267,13 @@ class QAttentionPerActBCAgent(Agent):
             logging.info('# Q Params: %d' % sum(
                 p.numel() for name, p in self._q.named_parameters() \
                 if p.requires_grad and 'clip' not in name))
+            
+            model, _ = load_clip("RN50", jit=False)
+            self._clip_rn50 = build_model(model.state_dict())
+            self._clip_rn50 = self._clip_rn50.float().to(device)
+            self._clip_rn50.eval()
+            del model
+
         else:
             for param in self._q.parameters():
                 param.requires_grad = False
@@ -369,8 +378,23 @@ class QAttentionPerActBCAgent(Agent):
         action_rot_grip = replay_sample['rot_grip_action_indicies'].int()
         action_gripper_pose = replay_sample['gripper_pose']
         action_ignore_collisions = replay_sample['ignore_collisions'].int()
-        lang_goal_emb = replay_sample['lang_goal_emb'].float()
-        lang_token_embs = replay_sample['lang_token_embs'].float()
+        # lang_goal_emb = replay_sample['lang_goal_emb'].float()
+        # lang_token_embs = replay_sample['lang_token_embs'].float()
+        
+        lang_goal_emb = []
+        lang_token_embs = []
+        for description in replay_sample['lang_goal']:
+            str_description = description.decode()
+            tokens = tokenize([str_description]).numpy()
+            token_tensor = torch.from_numpy(tokens).to(self._device)
+            sentence_emb, token_embs = self._clip_rn50.encode_text_with_embeddings(token_tensor)
+
+            lang_goal_emb.append(sentence_emb.float().detach())
+            lang_token_embs.append(token_embs.float().detach())
+        
+        lang_goal_emb = torch.cat(lang_goal_emb).to(self._device)
+        lang_token_embs = torch.cat(lang_token_embs).to(self._device)
+
         prev_layer_voxel_grid = replay_sample.get('prev_layer_voxel_grid', None)
         prev_layer_bounds = replay_sample.get('prev_layer_bounds', None)
         device = self._device
@@ -667,5 +691,9 @@ class QAttentionPerActBCAgent(Agent):
         print("loaded weights from %s" % weight_file)
 
     def save_weights(self, savedir: str):
-        torch.save(
-            self._q.state_dict(), os.path.join(savedir, '%s.pt' % self._name))
+        if isinstance(self._q, DistributedDataParallel):
+            model_state = self._q.module.state_dict()
+        else:
+            model_state = self._q.state_dict()
+
+        torch.save(model_state, os.path.join(savedir, '%s.pt' % self._name))

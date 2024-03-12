@@ -104,6 +104,8 @@ def run_seed(rank,
         agent = c2farm_lingunet_bc.launch_utils.create_agent(cfg)
 
     elif cfg.method.name == 'PERACT_BC':
+        agent = peract_bc.launch_utils.create_agent(cfg)
+
         replay_buffer = peract_bc.launch_utils.create_replay(
             cfg.replay.batch_size, rank, cfg.replay.timesteps,
             cfg.replay.prioritisation,
@@ -120,9 +122,7 @@ def run_seed(rank,
             cfg.method.voxel_sizes, cfg.method.bounds_offset,
             cfg.method.rotation_resolution, cfg.method.crop_augmentation,
             keypoint_method=cfg.method.keypoint_method)
-
-        agent = peract_bc.launch_utils.create_agent(cfg)
-
+        
     elif cfg.method.name == 'PERACT_RL':
         raise NotImplementedError("PERACT_RL is not supported yet")
 

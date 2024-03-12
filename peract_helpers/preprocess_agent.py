@@ -22,12 +22,13 @@ class PreprocessAgent(Agent):
 
     def update(self, step: int, replay_sample: dict) -> dict:
         # Samples are (B, N, ...) where N is number of buffers/tasks. This is a single task setup, so 0 index.
-        replay_sample = {k: v[:, 0] if len(v.shape) > 2 else v for k, v in replay_sample.items()}
+        # replay_sample = {k: v[:, 0] if len(v.shape) > 2 else v for k, v in replay_sample.items()}
         for k, v in replay_sample.items():
             if self._norm_rgb and 'rgb' in k:
                 replay_sample[k] = self._norm_rgb_(v)
             else:
-                replay_sample[k] = v.float()
+                if k not in ['tasks', 'lang_goal']:
+                    replay_sample[k] = v.float()
         self._replay_sample = replay_sample
         return self._pose_agent.update(step, replay_sample)
 
@@ -53,8 +54,8 @@ class PreprocessAgent(Agent):
             ScalarSummary('%s/demo_proportion' % prefix, demo_proportion),
             HistogramSummary('%s/low_dim_state' % prefix,
                     self._replay_sample['low_dim_state']),
-            HistogramSummary('%s/low_dim_state_tp1' % prefix,
-                    self._replay_sample['low_dim_state_tp1']),
+            # HistogramSummary('%s/low_dim_state_tp1' % prefix,
+            #         self._replay_sample['low_dim_state_tp1']),
             ScalarSummary('%s/low_dim_state_mean' % prefix,
                     self._replay_sample['low_dim_state'].mean()),
             ScalarSummary('%s/low_dim_state_min' % prefix,
@@ -91,4 +92,10 @@ class PreprocessAgent(Agent):
 
     def reset(self) -> None:
         self._pose_agent.reset()
+
+    def eval(self):
+        self._pose_agent._qattention_agents[0]._q.eval()
+
+    def train(self):
+        self._pose_agent._qattention_agents[0]._q.train()
 

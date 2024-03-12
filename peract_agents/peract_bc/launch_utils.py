@@ -421,7 +421,6 @@ def create_agent(cfg: DictConfig):
             transform_augmentation_rpy=cfg.method.transform_augmentation.aug_rpy,
             transform_augmentation_rot_resolution=cfg.method.transform_augmentation.aug_rot_resolution,
             optimizer_type=cfg.method.optimizer,
-            num_devices=cfg.ddp.num_devices,
         )
         qattention_agents.append(qattention_agent)
 

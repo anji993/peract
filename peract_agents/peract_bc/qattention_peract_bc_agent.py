@@ -410,6 +410,21 @@ class QAttentionPerActBCAgent(Agent):
 
         obs, pcd = self._preprocess_inputs(replay_sample)
 
+
+        '''
+import open3d as o3d
+pcd_o3d0 = o3d.geometry.PointCloud()
+pcd_o3d1 = o3d.geometry.PointCloud()
+pcd_o3d2 = o3d.geometry.PointCloud()
+pcd_o3d3 = o3d.geometry.PointCloud()
+pcd_o3d0.points = o3d.utility.Vector3dVector(np.transpose(pcd[0].detach().cpu().numpy(), (0, 2, 3, 1)).reshape(-1, 3))
+pcd_o3d1.points = o3d.utility.Vector3dVector(np.transpose(pcd[1].detach().cpu().numpy(), (0, 2, 3, 1)).reshape(-1, 3))
+pcd_o3d2.points = o3d.utility.Vector3dVector(np.transpose(pcd[2].detach().cpu().numpy(), (0, 2, 3, 1)).reshape(-1, 3))
+pcd_o3d3.points = o3d.utility.Vector3dVector(np.transpose(pcd[3].detach().cpu().numpy(), (0, 2, 3, 1)).reshape(-1, 3))
+o3d.visualization.draw_geometries([pcd_o3d0, pcd_o3d1, pcd_o3d2, pcd_o3d3, o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.3)])
+        '''
+        
+
         # batch size
         bs = pcd[0].shape[0]
 
